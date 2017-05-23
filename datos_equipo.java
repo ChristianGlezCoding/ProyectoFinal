@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
@@ -20,18 +19,8 @@ import java.util.ArrayList;
 
 public class datos_equipo extends AppCompatActivity {
 
-
     ImageButton call, facebook, instagram;
-
-    final String[] dir = new String[] {
-            "Pabellón I.E.S Rafael Arozarena 38300 La Orotava"
-            ,"Pabellón Quique Ruiz C/Poeta Arístedes Hernández Mora, 16 38500 Güímar"
-            ,"Pabellón Mpal. Esteban Afonso.  Av. de la República Argentina, 5 38208 San Cristóbal de La Laguna"
-            ,"Pabellón Mpal. de La Victoria. Calle Martin Corvo, s/n, 38380 La Victoria de Acentejo"
-            ,"Colegio Luther King.  Camino Las Gavias, 93 38206, San Cristóbal de La Laguna"
-            ,"0-Pabellón Mpal. de Tacoronte.Calle Peŕez Reyes, s/n, 38350 Tacoronte, Santa Cruz de Tenerife"
-            ,"Pabellón Pablos Abril.  Calle Transversal Luis Vives, 7, 38108 San Cristóbal de La Laguna,"
-            ,"Complejo Deportivo La Cuesta Camino Las Mantecas, 5 (El Charcón) 38320 La Cuesta,"};
+    TextView nom, dir, tlf;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,40 +29,39 @@ public class datos_equipo extends AppCompatActivity {
         call = (ImageButton) findViewById(R.id.buttonLlamada);
         facebook = (ImageButton) findViewById(R.id.buttonFacebook);
         instagram = (ImageButton) findViewById(R.id.buttonInstagram);
+        nom = (TextView) findViewById(R.id.textViewNombreEquipo);
+        dir = (TextView) findViewById(R.id.textViewDireccion);
+        tlf = (TextView) findViewById(R.id.textViewTelefono);
         final BDD base = new BDD(getApplicationContext());
         final ListView listView = (ListView) findViewById(R.id.list_view_categoria);
-        String joined = TextUtils.join(", ", dir);
-
-         String[] Categorias = {"Segunda División Autonómica Masculina"
-                , "Segunda División Autonómica Femenina"
-                , "Insular Senior Masculino"
-                , "Junior Insular Masculino"
-                , "Junior Insular Femenino"
-                , "Cadete Masculino"
-                , "Cadete Femenino"
-                , "Pre Cadete Masculino"
-                , "Preminibasket Femenino"
-                , "Benjamín Mixto"
-                , "Benjamín Femenino"};
-
-        ArrayAdapter<String> adaptador = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, Categorias);
-
         ImageView imageView = (ImageView) findViewById(R.id.imageViewLogo);
-        TextView nombre_Equipo = (TextView)findViewById(R.id.textViewDesc);
-        listView.setAdapter(adaptador);
         Intent i = getIntent();
         int FlagId = i.getIntExtra("logo", 0);
         String nombre = i.getStringExtra("nombre");
         final int id = Integer.parseInt(nombre) + 1;
 
-    base.obtenerDatos(base.getReadableDatabase(), 1);
+        nom.setText(base.obtenerDatos(id +"", 1));
+        dir.setText(base.obtenerDatos(id +"", 2));
+        tlf.setText(base.obtenerDatos(id +"", 6));
+
+
+
+        String[] Categorias = base.datos_ListViewCategorias(id + "").split(",");
+
+        ArrayAdapter<String> adaptador = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, Categorias);
+
+
+        listView.setAdapter(adaptador);
+
+
+        base.obtenerDatos(base.getReadableDatabase(), 1);
         ArrayList<String> resultado = base.obtenerDatos(base.getReadableDatabase(),  id);
         Log.i("onCreate", id + "");
         Log.i("onCreate:", resultado + "");
         imageView.setImageResource(FlagId);
 
 
-        nombre_Equipo.setText("Juventud Laguna\n\nPabellón Mpal. Esteban Afonso. \n\n Av. de la República Argentina, 5\n\n38208 San Cristóbal de La Laguna\n\n Teléfono: 922562102");
+        //nombre_Equipo.setText("Juventud Laguna\n\nPabellón Mpal. Esteban Afonso. \n\n Av. de la República Argentina, 5\n\n38208 San Cristóbal de La Laguna\n\n Teléfono: 922562102");
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -95,7 +83,8 @@ public class datos_equipo extends AppCompatActivity {
         call.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + "66666"));
+                String tel = base.obtenerDatos(id +"", 6);
+                Intent intent = new Intent(Intent.ACTION_DIAL, Uri.parse("tel:" + tel));
                 startActivity(intent);
             }
         });
@@ -104,15 +93,18 @@ public class datos_equipo extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 
-                String FACEBOOK_URL = "";
-                String FACEBOOK_PAGE_ID = "";
+                String FACEBOOK_URL = base.obtenerDatos(id +"", 4);
+                String FACEBOOK_PAGE_ID = base.obtenerDatos(id +"", 3);
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("fb://profile/" + FACEBOOK_PAGE_ID));
                     startActivity(intent);
-                } catch (ActivityNotFoundException e){
-                    Toast.makeText(getApplicationContext(), "El equipo no tiene página de Facebook", Toast.LENGTH_LONG).show();
                 } catch(Exception e) {
-                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(FACEBOOK_URL)));
+                    try {
+                        startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(FACEBOOK_URL)));
+                    }catch(Exception ex){
+                        Toast toast = Toast.makeText(getApplicationContext(), base.obtenerDatos(id +"", 1) + " no tiene página de Facebook", Toast.LENGTH_LONG);
+                        toast.show();
+                    }
                 }
             }
         });

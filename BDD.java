@@ -71,6 +71,18 @@ public class BDD extends SQLiteOpenHelper {
 
     };
 
+    final String[] cat = new String []{
+            "2ª División Aut. Femenina, Benj. Fem."
+            ,"2ª División Aut. Femenina, Insular Senior Masculino"
+            ,"2ª División Aut. Masculina, 2ª División Aut. Femenina, Junior Insular Masculino, Cadete Masculino, Infantil Masculino 1º Año, Minibasket Femenino, Preminibasket Masculino"
+            ,"2ª División Aut. Femenina"
+            ,"2ª División Aut. Masculina, 2ª División Aut. Femenina, Junior Insular Masculino"
+            ,"2ª División Aut. Masculina, 2ª División Aut. Femenina"
+            ,"2ª División Aut. Femenina"
+            ,"2ª División Aut. Femenina"
+
+    };
+
     public BDD(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
         this.contexto = context;
@@ -87,11 +99,14 @@ public class BDD extends SQLiteOpenHelper {
                 + "Direccion" + " TEXT,"
                 + "FacebookID" + " TEXT,"
                 + "FacebookPage" + " TEXT,"
+                + "Categorias" + " TEXT,"
                 + "Telefono" + " INTEGER );";
 
 
+
         sqLiteDatabase.execSQL(CREATE_EQUIPOS_TABLE);
-        insertar_Datos(nombres, dir, tel, fbId, fbPage);
+        insertar_Datos(nombres, dir, tel, fbId, fbPage, cat);
+        Log.i("onCreate", datos_ListViewCategorias("1").toString().replaceAll(",","\n"));
         sqLiteDatabase.close();
     }
 
@@ -124,7 +139,7 @@ public class BDD extends SQLiteOpenHelper {
 
 
 
-    public void insertar_Datos(String[] nombre, String[] direccion, int[] telefono, String[] facebookId, String[] facebookPage) {
+    public void insertar_Datos(String[] nombre, String[] direccion, int[] telefono, String[] facebookId, String[] facebookPage, String [] cat) {
         try {
             ContentValues cv = new ContentValues();
             for (int i = 0; i < nombre.length; i++) {
@@ -134,6 +149,7 @@ public class BDD extends SQLiteOpenHelper {
                 cv.put("FacebookID", facebookId[i]);
                 cv.put("FacebookPage", facebookPage[i]);
                 cv.put("Telefono", telefono[i]);
+                cv.put("Categorias", cat[i]);
                 DB.insert("EQUIPOS", null, cv);
             }
             DB.close();
@@ -143,7 +159,7 @@ public class BDD extends SQLiteOpenHelper {
     }
     public ArrayList<String> obtenerDatos(SQLiteDatabase db, int id) {
 
-        String Nombre, Direccion, Telefono, FacebookID, FacebookUrl;
+        String Nombre, Direccion, Telefono, FacebookID, FacebookUrl, Categorias;
         String filtroWhereLike = ""+id;
         String where = "ID LIKE ?";
         String[] whereArgs = {filtroWhereLike};
@@ -156,11 +172,13 @@ public class BDD extends SQLiteOpenHelper {
                 Direccion = "Dirección: "+ c.getString(2);
                 FacebookID = "Facebook ID: " + c.getString(3);
                 FacebookUrl = "Facebook Page: " + c.getString(4);
-                Telefono = "Teléfono: "+ c.getInt(5);
+                Categorias = "Categorías: " + c.getString(5);
+                Telefono = "Teléfono: "+ c.getInt(6);
                 anotaciones.add(Nombre);
                 anotaciones.add(Direccion);
                 anotaciones.add(FacebookID);
                 anotaciones.add(FacebookUrl);
+                anotaciones.add(Categorias);
                 anotaciones.add(Telefono);
             } while (c.moveToNext());
         }
@@ -178,6 +196,36 @@ public class BDD extends SQLiteOpenHelper {
         if (registro.moveToFirst()){
             do{
                 lista.add(registro.getString(1));
+            }  while(registro.moveToNext());
+        }
+        return lista;
+    }
+
+    public String datos_ListViewCategorias(String id){
+
+        String lista = new String();
+        SQLiteDatabase database = this.getWritableDatabase();
+        String q = "SELECT * FROM EQUIPOS WHERE id = '"+ id +"';";
+        Cursor registro = database.rawQuery(q, null);
+
+        if (registro.moveToFirst()){
+            do{
+                lista = registro.getString(5);
+            }  while(registro.moveToNext());
+        }
+        return lista;
+    }
+
+    public String obtenerDatos (String id, int column){
+
+        String lista = new String();
+        SQLiteDatabase database = this.getWritableDatabase();
+        String q = "SELECT * FROM EQUIPOS WHERE id = '"+ id +"';";
+        Cursor registro = database.rawQuery(q, null);
+
+        if (registro.moveToFirst()){
+            do{
+                lista = registro.getString(column);
             }  while(registro.moveToNext());
         }
         return lista;
